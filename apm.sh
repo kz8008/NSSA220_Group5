@@ -72,6 +72,17 @@ collect_systm_metric(){
 }
 
 
+echo "  Starting data collection every 5 seconds, press CTRL+C to stop."
 
+while true; do
+  CURRENT_ELAPSED=$(($SECONDS - $START_TIME))
+
+  collect_process_metrics "$CURRENT_ELAPSED"
+
+  collect_system_metrics "$CURRENT_ELAPSED"
+
+  sleep 5
+
+done
 
 
