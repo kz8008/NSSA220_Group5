@@ -23,10 +23,27 @@ cleanup() {
   echo 0
 }
 
+# guarantees cleanup runs automatically no matter h0w script ends
 trap cleanup SIGINT SIGTERM EXIT
 
 # spawn applications, function 2
 spawn_apps(){
+  echo "Spawning APM applications 1-6!"
+  
+  for i in {1..6};
+    do
+      if [ -x "/project1_executables/APM$i" ]; then
+      /project1_executables/APM$i "$IP_ADDR" &
+      APDM_PIDS+=($!)
+
+      echo "  Started APM$i with PID ${APM_PIDS[-1]}"
+
+    else
+      echo "  Warning: /project1_executables/APM$i not found or executable!"
+    fi
+  done
+
+
 }
 
 # collect process metrics, function 3
