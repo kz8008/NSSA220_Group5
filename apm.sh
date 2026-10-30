@@ -20,10 +20,10 @@ cleanup() {
   pkill -P $$ 2>/dev/null
 
   echo "Cleanup complete. Exiting . . ."
-  echo 0
+  exit 0
 }
 
-# guarantees cleanup runs automatically no matter h0w script ends
+# guarantees cleanup runs automatically no matter how script ends
 trap cleanup SIGINT SIGTERM EXIT
 
 # spawn applications, function 2
@@ -32,14 +32,14 @@ spawn_apps(){
   
   for i in {1..6};
     do
-      if [ -x "/project1_executables/APM$i" ]; then
-      /project1_executables/APM$i "$IP_ADDR" &
-      APDM_PIDS+=($!)
+      if [ -x "./project1_executables/APM$i" ]; then
+      ./project1_executables/APM$i "$IP_ADDR" &
+      APM_PIDS+=($!)
 
       echo "  Started APM$i with PID ${APM_PIDS[-1]}"
 
     else
-      echo "  Warning: /project1_executables/APM$i not found or executable!"
+      echo "  Warning: ./project1_executables/APM$i not found or executable!"
     fi
   done
 }
@@ -50,7 +50,7 @@ collect_process_metrics(){
 
   for i in {1..6};
     do 
-    local pid="${APM_PIDS[$9(i-1))]}"
+    local pid="${APM_PIDS[$((i-1))]}"
     local outfile="APM${i}_metrics.csv"
 
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
@@ -67,10 +67,12 @@ collect_process_metrics(){
 }
 
 # collect system metrics
-collect_systm_metric(){
+collect_system_metrics(){
   local elapsed=$1
+  return 0
 }
 
+spawn_apps
 
 echo "  Starting data collection every 5 seconds, press CTRL+C to stop."
 
