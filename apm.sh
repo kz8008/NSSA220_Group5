@@ -42,17 +42,36 @@ spawn_apps(){
       echo "  Warning: /project1_executables/APM$i not found or executable!"
     fi
   done
-
-
 }
 
 # collect process metrics, function 3
 collect_process_metrics(){
+  local elapsed=$1
+
+  for i in {1..6};
+    do 
+    local pid="${APM_PIDS[$9(i-1))]}"
+    local outfile="APM${i}_metrics.csv"
+
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      local metrics
+      metrics=$(ps -p "$pid" -o %cpu,%mem --no-headers 2>/dev/null)
+
+      read -r cpu mem <<< "$metrics"
+
+      if [ -n "$cpu" ] && [ -n "$mem" ]; then
+        echo "${elapsed},${cpu},${mem}" >> "$outfile"
+      fi
+    fi
+  done
 }
 
 # collect system metrics
 collect_systm_metric(){
+  local elapsed=$1
 }
+
+
 
 
 
