@@ -5,6 +5,8 @@ IP_ADDR="192.168.206.116"
 APM_PIDS=()
 START_TIME=$SECONDS
 
+rm -f system_metrics.csv
+
 # cleanup, function 1
 cleanup() {
   echo -e "\n Signal caught! Terminating APM applications and cleaning up . . ."
@@ -66,13 +68,39 @@ collect_process_metrics(){
   done
 }
 
+# Convert to kB/s
+to_kbps(){
+	local val=$1
+	case "$val" in 
+		*K) echo "${val%K}" ;;
+		*M) echo "${val%M}" | awk '{printf "%.2f", $1 * 1024}' ;; #MB -> kB
+		*) echo "$val" | awk '{printf "%.2f", $1 / 1024}' ;; #bytes -> kB
+	esac
+}
+
 # collect system metrics
 collect_system_metrics(){
   local elapsed=$1
-  return 0
+  local line rx tx writes avail
+  
+  # network RX and TX from daemon
+  line=$(ifstat ens192 2>/dev/null | grep ens192)
+  rx=$(to_kbps "$(echo "$line" | awk '{print $7}')")
+  tx=$(to_kbps "$(echo "$line" | awk '{print $9}')")
+  
+  # disk writes kbs to sda
+  writes=$(iostat -d -k sda 1 2| grep sda | tail -n 1 | awk '{print $4}')
+  
+  # available space 
+  avail=$(df -m / | tail -n 1 | awk '{print $4}')
+  
+  echo "${elapsed},${rx},${tx},${writes},${avail}" >> system_metrics.csv
+  
 }
 
 spawn_apps
+
+ifstat -d 1 -t 1
 
 echo "  Starting data collection every 5 seconds, press CTRL+C to stop."
 
@@ -84,7 +112,5 @@ while true; do
   collect_system_metrics "$CURRENT_ELAPSED"
 
   sleep 5
-
-done
 
 
